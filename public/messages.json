@@ -1,1 +1,74 @@
-[]
+[
+  {
+    "id": "kexienb",
+    "author": "Lee-JinBu",
+    "github": "Lee-JinBu",
+    "url": "https://github.com/Lee-JinBu",
+    "title": "冒险者留言",
+    "body": [
+      {
+        "type": "paragraph",
+        "children": [
+          {
+            "type": "text",
+            "value": "#kxnb\n科协🐮🍺"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "ohye",
+    "author": "UnHapp-YYY",
+    "github": "UnHapp-YYY",
+    "url": "https://github.com/UnHapp-YYY",
+    "title": "我的留言",
+    "body": [
+      {
+        "type": "paragraph",
+        "children": [
+          {
+            "type": "text",
+            "value": "不笑的是GAY"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "test-author",
+    "author": "Lee-JinBu",
+    "github": "Lee-JinBu",
+    "url": "https://github.com/Lee-JinBu",
+    "title": "自动作者识别测试",
+    "body": [
+      {
+        "type": "paragraph",
+        "children": [
+          {
+            "type": "text",
+            "value": "大家好！我是 Lee-JinBu。"
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "children": [
+          {
+            "type": "text",
+            "value": "这是一次自动识别 PR 作者的测试。"
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "children": [
+          {
+            "type": "text",
+            "value": "希望合并后能正确显示我的 GitHub 用户名！"
+          }
+        ]
+      }
+    ]
+  }
+]

@@ -1,0 +1,106 @@
+.guild-navigation {
+  --guild-nav-text: var(--text, var(--course-text, #e8eaf0));
+  --guild-nav-muted: var(--muted, var(--course-muted, #9aacc0));
+  --guild-nav-gold: var(--gold, var(--course-gold, #f4c66b));
+  --guild-nav-line: var(--line, var(--course-line, rgba(149, 177, 205, .18)));
+  position: relative;
+  z-index: 5;
+  display: flex;
+  min-width: 0;
+  min-height: 66px;
+  align-items: center;
+  gap: clamp(.55rem, 2vw, 1.5rem);
+  border-bottom: 1px solid var(--guild-nav-line);
+  color: var(--guild-nav-text);
+}
+.guild-navigation__brand {
+  display: inline-flex;
+  min-width: 0;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: .65rem;
+  color: inherit;
+  font-size: .88rem;
+  font-weight: 760;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.guild-navigation__seal {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--guild-nav-gold), transparent 42%);
+  background: linear-gradient(145deg, color-mix(in srgb, var(--guild-nav-gold), transparent 82%), transparent);
+  box-shadow: 3px 3px 0 color-mix(in srgb, var(--guild-nav-gold), transparent 86%);
+  color: var(--guild-nav-gold);
+  font: 800 .9rem var(--mono, var(--course-mono, monospace));
+}
+.guild-navigation__menu { position: relative; margin-left: auto; }
+.guild-navigation__toggle {
+  display: none;
+  min-height: 38px;
+  align-items: center;
+  gap: .45rem;
+  padding: .45rem .7rem;
+  border: 1px solid var(--guild-nav-line);
+  color: var(--guild-nav-text);
+  background: rgba(14, 25, 40, .92);
+  cursor: pointer;
+  font-size: .78rem;
+  font-weight: 700;
+}
+.guild-navigation__toggle::after { color: var(--guild-nav-gold); content: "▾"; }
+.guild-navigation__links { display: flex; align-items: center; gap: clamp(.2rem, 1vw, .8rem); }
+.guild-navigation__link {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  padding: .45rem .7rem;
+  border: 1px solid transparent;
+  color: var(--guild-nav-muted);
+  font-size: .78rem;
+  font-weight: 650;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color .16s ease, border-color .16s ease, background .16s ease;
+}
+.guild-navigation__link:hover { border-color: var(--guild-nav-line); color: var(--guild-nav-text); background: rgba(120, 153, 184, .07); }
+.guild-navigation__link[aria-current="page"] { border-color: color-mix(in srgb, var(--guild-nav-gold), transparent 65%); color: var(--guild-nav-gold); background: color-mix(in srgb, var(--guild-nav-gold), transparent 94%); }
+.guild-navigation__link:focus-visible, .guild-navigation__brand:focus-visible, .guild-navigation__toggle:focus-visible { outline: 2px solid var(--guild-nav-gold); outline-offset: 3px; }
+.guild-navigation__trailing { flex: 0 0 auto; }
+.course-topbar .guild-navigation { flex: 1 1 auto; min-height: 74px; border-bottom: 0; }
+
+@media (max-width: 760px) {
+  .guild-navigation { min-height: 58px; gap: .5rem; }
+  .guild-navigation__brand { gap: .45rem; font-size: .79rem; }
+  .guild-navigation__seal { width: 30px; height: 30px; flex-basis: 30px; }
+  .guild-navigation__menu { flex: 0 0 auto; margin-left: auto; }
+  .guild-navigation__toggle { display: flex; }
+  .guild-navigation__links { display: none; }
+  .guild-navigation__menu--open .guild-navigation__links {
+    position: absolute;
+    z-index: 30;
+    top: calc(100% + .45rem);
+    right: 0;
+    display: grid;
+    min-width: 220px;
+    gap: .2rem;
+    padding: .45rem;
+    border: 1px solid var(--guild-nav-line);
+    background: #0c1726;
+    box-shadow: 0 14px 35px rgba(0, 0, 0, .4);
+  }
+  .guild-navigation__link { min-height: 44px; padding-inline: .8rem; }
+  .guild-navigation__trailing { margin-left: 0; }
+  .guild-navigation[data-page="home"] .guild-navigation__trailing { display: none; }
+  .course-topbar { align-items: stretch; flex-direction: column; gap: .25rem; padding-block: .45rem; }
+  .course-topbar .guild-navigation { min-height: 48px; flex: 0 0 auto; }
+  .course-topbar__right { align-self: flex-end; }
+}
+
+@media (max-width: 380px) {
+  .guild-navigation__name { max-width: 130px; overflow: hidden; text-overflow: ellipsis; }
+  .guild-navigation__toggle { padding-inline: .55rem; }
+}

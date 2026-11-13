@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="240" viewBox="0 0 720 240" role="img" aria-labelledby="title desc">
+  <title id="title">公会新手路线图</title>
+  <desc id="desc">从 Markdown 书桌出发，经过 Git 森林，到达 GitHub 协作城堡。</desc>
+  <rect width="720" height="240" rx="14" fill="#0a1725"/>
+  <path d="M18 18h684v204H18z" fill="none" stroke="#55718a" stroke-opacity=".38" stroke-dasharray="5 8"/>
+  <path d="M98 165h102v-60h134v52h112V91h170" fill="none" stroke="#f4c66b" stroke-width="5" stroke-linecap="square" stroke-dasharray="3 7"/>
+  <path d="M82 172h22v-22H82zM324 98h20v20h-20zM433 145h22v22h-22z" fill="#f4c66b"/>
+  <circle cx="92" cy="160" r="20" fill="#f4c66b" fill-opacity=".13" stroke="#f4c66b"/>
+  <circle cx="447" cy="156" r="20" fill="#73b8ff" fill-opacity=".13" stroke="#73b8ff"/>
+  <g fill="#17334c" stroke="#73b8ff" stroke-width="2">
+    <path d="M186 87h27v27h-27zM213 60h27v27h-27zM240 87h27v27h-27zM213 87h27v27h-27z"/>
+    <path d="M369 153h24v24h-24zM393 129h24v24h-24zM417 153h24v24h-24z"/>
+  </g>
+  <g fill="#f4c66b">
+    <path d="M556 59h32v32h-32zM588 43h32v48h-32zM620 59h32v32h-32z"/>
+    <path d="M568 91h72v67h-72z"/>
+  </g>
+  <path d="M590 121h26v37h-26z" fill="#0a1725"/>
+  <text x="92" y="207" fill="#dbe6ef" font-family="Segoe UI, sans-serif" font-size="14" text-anchor="middle">文字营地</text>
+  <text x="382" y="207" fill="#dbe6ef" font-family="Segoe UI, sans-serif" font-size="14" text-anchor="middle">版本森林</text>
+  <text x="604" y="190" fill="#f4c66b" font-family="Segoe UI, sans-serif" font-size="14" text-anchor="middle">协作城堡</text>
+</svg>

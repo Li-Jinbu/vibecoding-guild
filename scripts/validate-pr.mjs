@@ -21,6 +21,30 @@ export function validatePrChanges(changes) {
   return change.path;
 }
 
+const MAINTAINER_PERMISSIONS = new Set(["admin", "maintain", "write"]);
+
+export function isTrustedMaintainerPermission(permission) {
+  return MAINTAINER_PERMISSIONS.has(permission);
+}
+
+export function classifyPullRequestChanges(changes, permission = "none") {
+  if (!Array.isArray(changes) || changes.length === 0) throw new Error("PR 没有可检查的文件变更。");
+
+  if (isTrustedMaintainerPermission(permission)) {
+    if (changes.length === 1 && changes[0].status === "A" && changes[0].path.startsWith("messages/")) {
+      return { kind: "message", path: validatePrChanges(changes) };
+    }
+    // Real student submissions and the author ledger remain governed by the
+    // strict message path, even when a maintainer happens to open the PR.
+    if (changes.some(({ path }) => path === "data/message-authors.json" || path.startsWith("messages/"))) {
+      throw new Error("维护者更新 PR 不能修改真实留言或作者映射；请将留言投稿单独提交为一个 PR。");
+    }
+    return { kind: "maintenance" };
+  }
+
+  return { kind: "message", path: validatePrChanges(changes) };
+}
+
 function changedFiles(baseSha, headSha, cwd) {
   const mergeBase = git(["merge-base", baseSha, headSha], { cwd });
   const raw = execFileSync("git", ["diff", "--name-status", "-z", "--no-renames", mergeBase, headSha], { cwd, encoding: "utf8" });
@@ -31,7 +55,7 @@ function changedFiles(baseSha, headSha, cwd) {
   return changes;
 }
 
-export async function preparePullRequestMessage({ baseSha, headSha, pullNumber, cwd = process.cwd() }) {
+export async function preparePullRequestMessage({ baseSha, headSha, pullNumber, permission = "none", cwd = process.cwd() }) {
   if (!/^[a-f0-9]{40}$/i.test(baseSha ?? "") || !/^[a-f0-9]{40}$/i.test(headSha ?? "")) throw new Error("PR 提交信息无效，无法检查文件变更。");
   if (!/^\d+$/.test(String(pullNumber ?? ""))) throw new Error("PR 编号无效，无法读取留言文件。");
 
@@ -40,7 +64,13 @@ export async function preparePullRequestMessage({ baseSha, headSha, pullNumber, 
   const fetchedHead = git(["rev-parse", ref], { cwd });
   if (fetchedHead.toLowerCase() !== headSha.toLowerCase()) throw new Error("PR 内容刚刚更新，请等待新一轮检查完成。");
 
-  const relativePath = validatePrChanges(changedFiles(baseSha, fetchedHead, cwd));
+  const classification = classifyPullRequestChanges(changedFiles(baseSha, fetchedHead, cwd), permission);
+  if (classification.kind === "maintenance") {
+    console.log("已确认 PR 作者拥有仓库维护权限；按维护者代码更新流程检查。真实留言和作者映射保持独立保护。");
+    return classification;
+  }
+
+  const relativePath = classification.path;
   const projectRoot = resolve(cwd);
   const messagesDirectory = resolve(projectRoot, "messages");
   const destination = resolve(projectRoot, relativePath);
@@ -72,6 +102,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
       baseSha: process.env.PR_BASE_SHA,
       headSha: process.env.PR_HEAD_SHA,
       pullNumber: process.env.PR_NUMBER,
+      permission: process.env.PR_AUTHOR_PERMISSION,
       cwd: process.cwd(),
     });
   } catch (error) {
