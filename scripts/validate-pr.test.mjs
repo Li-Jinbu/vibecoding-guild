@@ -5,7 +5,7 @@ import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { MAX_FILE_BYTES } from "./messages.mjs";
-import { preparePullRequestMessage, validatePrChanges } from "./validate-pr.mjs";
+import { classifyPullRequestChanges, isTrustedMaintainerPermission, preparePullRequestMessage, validatePrChanges } from "./validate-pr.mjs";
 
 function gitAt(directory, ...args) {
   return execFileSync("git", args, { cwd: directory, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
@@ -59,6 +59,55 @@ test("PRs cannot modify existing files or include non-message files", () => {
   assert.throws(() => validatePrChanges([{ status: "A", path: "messages/nested/note.md" }]), /路径符号/);
   assert.throws(() => validatePrChanges([{ status: "A", path: "messages/_template.md" }]), /下划线开头/);
   assert.throws(() => validatePrChanges([{ status: "A", path: "messages/hello.md" }, { status: "A", path: "messages/other.md" }]), /只能新增一个/);
+});
+
+test("a student can submit exactly one valid message", () => {
+  assert.deepEqual(classifyPullRequestChanges([{ status: "A", path: "messages/new-note.md" }], "none"), {
+    kind: "message", path: "messages/new-note.md",
+  });
+});
+
+test("a student cannot modify site code or workflows", () => {
+  for (const path of ["src/course/main.ts", ".github/workflows/pr-validation.yml"]) {
+    assert.throws(() => classifyPullRequestChanges([{ status: "M", path }], "none"), /必须是新增文件/);
+  }
+});
+
+test("a verified repository maintainer can submit a course update", () => {
+  assert.equal(isTrustedMaintainerPermission("write"), true);
+  assert.equal(isTrustedMaintainerPermission("maintain"), true);
+  assert.equal(isTrustedMaintainerPermission("admin"), true);
+  assert.deepEqual(classifyPullRequestChanges([
+    { status: "M", path: "src/course/main.ts" },
+    { status: "A", path: "scripts/course.test.mjs" },
+  ], "write"), { kind: "maintenance" });
+  assert.deepEqual(classifyPullRequestChanges([{ status: "A", path: "messages/maintainer-note.md" }], "write"), {
+    kind: "message", path: "messages/maintainer-note.md",
+  });
+});
+
+test("titles, labels, branch names, and author-supplied claims never grant maintenance permission", () => {
+  const studentClaims = {
+    permission: "none",
+    title: "[maintainer] update course",
+    labels: ["maintainer-approved"],
+    branch: "maintainer/course-update",
+    description: "I am a maintainer",
+  };
+  assert.equal(isTrustedMaintainerPermission(studentClaims.permission), false);
+  assert.throws(() => classifyPullRequestChanges([{ status: "M", path: "src/course/main.ts" }], studentClaims.permission), /必须是新增文件/);
+});
+
+test("a fork author without verified write permission cannot submit course code", () => {
+  for (const permission of [undefined, "none", "read", "triage"]) {
+    assert.throws(() => classifyPullRequestChanges([{ status: "M", path: "src/course/main.ts" }], permission), /必须是新增文件/);
+  }
+});
+
+test("maintenance PRs cannot alter real messages or the author ledger", () => {
+  for (const path of ["messages/ohye.md", "data/message-authors.json"]) {
+    assert.throws(() => classifyPullRequestChanges([{ status: "M", path }], "admin"), /不能修改真实留言或作者映射/);
+  }
 });
 
 test("a non-message change in an earlier PR commit is rejected", async () => {

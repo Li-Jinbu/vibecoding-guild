@@ -17,10 +17,17 @@ test("PR 工作流从目标分支加载，只读校验 PR 数据且不执行 For
   assert.ok(workflow.on.pull_request_target.branches.includes("main"));
   assert.equal(workflow.permissions.contents, "read");
   assert.match(source, /ref: \$\{\{ github\.event\.pull_request\.base\.sha \}\}/);
-  assert.doesNotMatch(source, /github\.event\.pull_request\.head\.sha[^\n]*ref:/);
+  assert.match(source, /getCollaboratorPermissionLevel/);
+  assert.match(source, /steps\.permission\.outputs\.level == 'write'/);
+  assert.match(source, /steps\.permission\.outputs\.level == 'maintain'/);
+  assert.match(source, /steps\.permission\.outputs\.level == 'admin'/);
+  assert.match(source, /persist-credentials: false/);
+  assert.match(source, /PR_AUTHOR_PERMISSION:/);
   const validator = await readFile(new URL("./validate-pr.mjs", import.meta.url), "utf8");
   assert.match(validator, /merge-base/);
   assert.match(validator, /name-status/);
+  assert.match(validator, /isTrustedMaintainerPermission/);
+  assert.match(validator, /data\/message-authors\.json/);
 });
 
 test("部署工作流只在 main push 触发并使用 Pages Actions", async () => {
