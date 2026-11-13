@@ -14,17 +14,43 @@ concurrency:
 
 jobs:
   validate:
-    name: PR 留言校验
+    name: PR 安全校验
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
-      # pull_request_target 使用目标分支中的可信工作流；只检出 base SHA，PR 内容仅按 Git 对象读取并解析为数据。
+      # 只根据 GitHub API 返回的仓库权限判断维护者身份；标题、标签、分支名和描述不参与授权。
+      - name: 查询 PR 作者的仓库权限
+        id: permission
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const login = context.payload.pull_request?.user?.login;
+            if (!login) throw new Error('GitHub PR 元数据缺少作者信息，无法安全检查权限。');
+            try {
+              const result = await github.rest.repos.getCollaboratorPermissionLevel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                username: login,
+              });
+              core.setOutput('level', result.data.permission);
+              core.info(`已从 GitHub API 获取 PR 作者权限：${result.data.permission}`);
+            } catch (error) {
+              if (error.status === 404) {
+                core.setOutput('level', 'none');
+                core.info('PR 作者不是仓库协作者，按普通留言投稿规则检查。');
+              } else {
+                throw new Error(`无法从 GitHub 核实 PR 作者权限（HTTP ${error.status ?? 'unknown'}）。为安全起见停止校验。`);
+              }
+            }
+
+      # pull_request_target 使用 main 中的可信工作流和校验器；PR 内容只按 Git 对象读取，不作为脚本执行。
       - name: 检出目标分支
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.base.sha }}
           fetch-depth: 0
+          persist-credentials: false
       - name: 设置 Node.js
         uses: actions/setup-node@v4
         with:
@@ -37,7 +63,23 @@ jobs:
           PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_AUTHOR_PERMISSION: ${{ steps.permission.outputs.level }}
         run: node scripts/validate-pr.mjs
+
+      # Only authors whose repository permission was verified by GitHub as
+      # write/maintain/admin have their PR code checked out and executed.
+      # The job has no write permission or repository secrets.
+      - name: 检出可信维护者的代码更新
+        if: steps.permission.outputs.level == 'write' || steps.permission.outputs.level == 'maintain' || steps.permission.outputs.level == 'admin'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: 安装维护者 PR 的依赖
+        if: steps.permission.outputs.level == 'write' || steps.permission.outputs.level == 'maintain' || steps.permission.outputs.level == 'admin'
+        run: npm ci
       - name: 运行自动化测试
         run: npm test
       - name: 检查留言数据
@@ -46,4 +88,4 @@ jobs:
         run: npm run build
       - name: 提供中文失败提示
         if: failure()
-        run: echo "::error::留言检查没通过。请按提示只新增一个 messages/ 下的 .md 文件，并检查文件大小和留言内容。"
+        run: echo "::error::PR 校验没通过：普通投稿请只新增一个符合要求的 messages/*.md 文件；课程或网站更新需要 GitHub 核实的仓库维护权限。请查看上方中文错误并修正。"

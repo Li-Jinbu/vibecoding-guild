@@ -1,9 +1,9 @@
 ﻿import { test, afterEach } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, writeFile, rm } from "node:fs/promises";
+import { mkdtemp, writeFile, readFile, mkdir, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { readMessages, MAX_FILE_BYTES } from "./messages.mjs";
+import { readMessages, generateMessages, MAX_FILE_BYTES } from "./messages.mjs";
 
 let root;
 async function setup() { root = await mkdtemp(join(tmpdir(), "guild-messages-")); return root; }
@@ -57,6 +57,33 @@ test("raw HTML and dangerous links are rejected", async () => {
 
 test("empty directory returns an empty list", async () => {
   await setup(); assert.deepEqual(await readMessages(root), []);
+});
+
+test("generated wall data auto-discovers new Markdown and applies trusted author or anonymous fallback", async () => {
+  await setup();
+  const messages = join(root, "messages");
+  const output = join(root, "public", "messages.json");
+  await mkdir(messages);
+  await put("ohye.md", "# 欢迎加入\n\n这条留言由构建时自动发现。", messages);
+  await put("unmapped.md", "# 未登记作者\n\n保留匿名展示。", messages);
+
+  const authors = {
+    "messages/ohye.md": {
+      login: "UnHapp-YYY",
+      pullRequest: 7,
+      mergedAt: "2026-11-13T00:00:00.000Z",
+    },
+  };
+  const generated = await generateMessages(messages, output, authors);
+  const publicData = JSON.parse(await readFile(output, "utf8"));
+
+  assert.deepEqual(generated.map(({ id }) => id), ["ohye", "unmapped"]);
+  assert.deepEqual(publicData, generated);
+  assert.equal(publicData[0].author, "UnHapp-YYY");
+  assert.equal(publicData[0].github, "UnHapp-YYY");
+  assert.equal(publicData[0].url, "https://github.com/UnHapp-YYY");
+  assert.equal(publicData[1].author, "匿名冒险者");
+  assert.equal(publicData[1].github, "");
 });
 
 test("underscore Markdown templates are ignored", async () => {

@@ -1,5 +1,7 @@
 /// <reference types="vite/client" />
 import "./style.css";
+import "./site-navigation.css";
+import { createGuildNavigation, siteNavigationUrls } from "./site-navigation";
 
 type InlineNode =
   | { type: "text"; value: string }
@@ -137,10 +139,9 @@ function createApp(): HTMLElement {
   rail.append(brandMark, railLine);
   const main = el("main", "main-content"); main.id = "top";
 
-  const topbar = el("header", "topbar");
-  const breadcrumb = el("div", "breadcrumb"); breadcrumb.append(el("span", "breadcrumb__dot"), el("span", undefined, "冒险者公会"), el("span", "breadcrumb__slash", "/"), el("span", "breadcrumb__current", "新手大厅"));
   const status = el("div", "online-status"); status.append(el("span", "online-status__dot"), el("span", undefined, "公会开放中"));
-  topbar.append(breadcrumb, status);
+  const navigation = createGuildNavigation("home", status);
+  const navigationUrls = siteNavigationUrls(import.meta.env.BASE_URL);
 
   const hero = el("section", "hero"); hero.setAttribute("aria-labelledby", "hero-title");
   const heroText = el("div", "hero__copy");
@@ -166,6 +167,18 @@ function createApp(): HTMLElement {
   const statB = el("div", "stat"); statB.append(el("span", "stat__label", "YOUR FIRST STEP"), el("strong", "stat__value", "提交一条留言"));
   const statC = el("div", "stat stat--right"); statC.append(el("span", "stat__label", "BUILT WITH"), el("strong", "stat__value", "Git · Markdown · 你"));
   stats.append(statA, statB, statC);
+
+  const academyEntry = el("section", "academy-entry");
+  academyEntry.setAttribute("aria-labelledby", "academy-entry-title");
+  const academyCopy = el("div", "academy-entry__copy");
+  const academyLabel = el("span", "academy-entry__label", "SEVEN INTERACTIVE CHAPTERS");
+  const academyTitle = el("h2", "academy-entry__title", "开启 Git 冒险之旅"); academyTitle.id = "academy-entry-title";
+  academyCopy.append(academyLabel, academyTitle,
+    el("p", "academy-entry__description", "从 Markdown、Git 到 AI Agent，通过互动演示完成你的第一次开源协作。"));
+  const academyLink = el("a", "button button--gold academy-entry__button", "进入互动课程");
+  academyLink.href = navigationUrls.course;
+  academyLink.append(icon("arrow", "button__icon"));
+  academyEntry.append(academyCopy, academyLink);
 
   const wall = el("section", "wall-section"); wall.id = "wall"; wall.setAttribute("aria-labelledby", "wall-title");
   const sectionHead = el("div", "section-heading");
@@ -209,7 +222,7 @@ function createApp(): HTMLElement {
   const footerTop = el("a", "footer-top", "回到顶部 ↑"); footerTop.href = "#top";
   footer.append(footerBrand, footerNote, footerTop);
 
-  main.append(topbar, hero, stats, wall, guide, footer); grid.append(rail, main); shell.append(grid);
+  main.append(navigation, hero, stats, academyEntry, wall, guide, footer); grid.append(rail, main); shell.append(grid);
   return shell;
 }
 
